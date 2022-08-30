@@ -1,0 +1,100 @@
+version: "2"
+
+services:
+  service:
+    build:
+      context: service
+      dockerfile: Dockerfile
+    depends_on:
+      - evidently_service
+      - mongo
+    environment:
+      TRACKING_SERVER: "http://ec2-13-42-12-107.eu-west-2.compute.amazonaws.com:5000"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_BUCKET: "mlflow-bucket-cpereira-mlops-zoomcamp-cpereira"
+      EVIDENTLY_SERVICE: "http://evidently_service:8085"
+      MONGODB_ADDRESS: "mongodb://mongo:27017/"
+    ports:
+      - "9696:9696"
+    networks:
+      - back-tier
+      - front-tier
+    restart: always
+  streamlit:
+    build:
+      context: streamlit
+      dockerfile: Dockerfile
+    depends_on:
+      - service
+    environment:
+      TRACKING_SERVER: "http://ec2-13-42-12-107.eu-west-2.compute.amazonaws.com:5000"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_BUCKET: "mlflow-bucket-cpereira-mlops-zoomcamp-cpereira"
+      FLASK_API_ENDPOINT: "http://service:9696/predict"
+    ports:
+      - "8501:8501"
+    networks:
+      - front-tier
+    restart: always
+  evidently_service:
+    build:
+      context: evidently_service
+      dockerfile: Dockerfile
+    depends_on:
+      - grafana
+    volumes:
+      - ./evidently_service/datasets:/app/datasets
+      - ./evidently_service/config.yaml:/app/config.yaml
+    ports:
+      - "8085:8085"
+    networks:
+      - back-tier
+      - front-tier
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./evidently_service/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./evidently_service/dbs/prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - back-tier
+    restart: always
+  grafana:
+    image: grafana/grafana
+    user: "472"
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./evidently_service/config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./evidently_service/config/grafana_dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./evidently_service/dashboards:/opt/grafana/dashboards
+      - ./evidently_service/dbs/grafana_data:/var/lib/grafana
+    networks:
+      - back-tier
+      - front-tier
+    restart: always
+  mongo:
+    image: mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./evidently_service/dbs/mongo_data:/data/db
+    networks:
+      - back-tier
+      - front-tier
+
+networks:
+  front-tier:
+  back-tier:

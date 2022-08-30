@@ -1,0 +1,24 @@
+[tool.pylint.messages_control]
+
+disable = [
+    "missing-function-docstring",
+    "missing-final-newline",
+    "missing-class-docstring",
+    "missing-module-docstring",
+    "invalid-name",
+    "too-few-public-methods",
+    "wrong-import-order",
+    "import-error",
+    "ungrouped-imports",
+    "logging-too-many-args"
+]
+
+[tool.black]
+line-length = 90
+target-version = ['py39']
+skip-string-normalization = true
+
+[tool.isort]
+py_version=39
+multi_line_output = 3
+length_sort = true

@@ -1,0 +1,63 @@
+name: CD-Deploy
+on:
+  push:
+    branches:
+      - 'main'
+
+env:
+  AWS_DEFAULT_REGION: 'eu-west-2'
+  AWS_REGION: 'eu-west-2'
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+  KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      # Define the infrastructure
+      - name: TF plan
+        id: tf-plan
+        working-directory: 'terraform'
+        run: |
+          terraform init -backend-config="key=mlops-zoomcamp-cpereira.tfstate" -reconfigure && terraform plan
+      - name: TF Apply
+        id: tf-apply
+        working-directory: 'terraform'
+        if: ${{ steps.tf-plan.outcome }} == 'success'
+        run: |
+          terraform apply -auto-approve
+          echo "::set-output name=model_bucket::$(terraform output model_bucket | xargs)"
+       
+      # Deploy
+      - name: Run service
+        id: deploy
+        env:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          kaggle-username: ${{ env.KAGGLE_USERNAME }}
+          kaggle-key: ${{ env.KAGGLE_KEY }}
+        run: |
+          docker-compose -f docker-compose-service.yml up --build -d
+          sleep 30
+          ERROR_CODE=$?
+          if [ ${ERROR_CODE} != 0 ]; then
+              docker-compose -f docker-compose-service.yml logs
+              docker-compose -f docker-compose-service.yml down
+              exit ${ERROR_CODE}
+          fi
+          docker-compose -f docker-compose-service.yml down

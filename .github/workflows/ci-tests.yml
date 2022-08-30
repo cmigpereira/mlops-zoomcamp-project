@@ -1,0 +1,62 @@
+name: CI-Tests
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_DEFAULT_REGION: 'eu-west-2'
+  AWS_REGION: 'eu-west-2'
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: pip install pipenv && pipenv install --system --dev
+
+      - name: Run Unit tests
+        working-directory: "unit_tests"
+        run: pipenv run pytest tests.py
+
+      - name: Lint
+        run: pipenv run pylint --fail-under=8 --recursive=y .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Integration Test
+        working-directory: "integration_tests"
+        run: |
+          . run.sh
+
+  tf-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v2
+
+      - name: TF plan
+        id: plan
+        working-directory: 'terraform'
+        run: |
+          terraform init -backend-config="key=mlops-zoomcamp-cpereira.tfstate" --reconfigure && terraform plan

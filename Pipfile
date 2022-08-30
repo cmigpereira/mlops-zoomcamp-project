@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+scikit-learn = "==1.0.2"
+mlflow = "*"
+boto3 = "*"
+xgboost = "*"
+hyperopt = "*"
+matplotlib = "*"
+streamlit = "*"
+flask = "*"
+gunicorn = "*"
+pandas = "*"
+deepdiff = "*"
+
+[dev-packages]
+ipykernel = "*"
+pytest = "*"
+pylint = "==2.14.4"
+black = "*"
+isort = "*"
+pre-commit = "*"
+requests = "*"
+
+[requires]
+python_version = "3.9"

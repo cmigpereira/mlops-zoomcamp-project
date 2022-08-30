@@ -1,0 +1,23 @@
+datasets:
+  vehicles:
+    column_mapping:
+      categorical_features:
+        - 'fuel'
+        - 'transmission'
+        - 'paint_color'
+      numerical_features:
+        - 'year'
+        - 'odometer'
+    data_format:
+      header: true
+      separator: ','
+    monitors:
+      - data_drift
+    reference_file: ./datasets/train.pq
+service:
+  calculation_period_sec: 2
+  min_reference_size: 30
+  moving_reference: false
+  datasets_path: datasets
+  use_reference: true
+  window_size: 5

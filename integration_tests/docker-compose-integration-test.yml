@@ -1,0 +1,16 @@
+version: "2"
+
+services:
+  integration_tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TRACKING_SERVER: "http://ec2-13-42-12-107.eu-west-2.compute.amazonaws.com:5000"
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_BUCKET: "mlflow-bucket-cpereira-mlops-zoomcamp-cpereira"
+    ports:
+      - "9696:9696"
