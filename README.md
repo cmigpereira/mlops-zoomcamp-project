@@ -35,9 +35,9 @@ The main technologies are the following ones:
 
 ## Flow
 
-Airflow orchestrates the download of the dataset from Kaggle, the modeling and deployment of the first model by using MLFlow for experiment tracking and model registry - the model is set to production stage. 
+Airflow orchestrates the download of the dataset from Kaggle, the modeling and deployment of the initial model, by using MLFlow for experiment tracking and model registry. The model is set to production stage. 
 XGBoost is used for creating the model.
-Some other tasks run in the background to guarantee that the service will run smoothly when started.
+Some other tasks run in the background to guarantee that the entire service will run smoothly when started.
 
 When the service boots, it obtains the model staged in production from MLFlow, starts the Flask app and Gunicorn for serving web requests, starts Evidently for monitoring the data input by the user, and starts Streamlit for the frontend, where the user can predict values for vehicles. 
 
