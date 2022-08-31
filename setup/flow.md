@@ -12,6 +12,18 @@ On the view page you can see 2 dags:
 The diagrams for each DAG can be seen on the [images folder](../imgs/).
 
 
+## MLFlow
+
+Experiments and their information can be accessed programatically or via a web-browser by connecting to the EC2 endpoint (created on [setup_aws_mlflow.md](../setup/setup_aws_mlflow.md)):
+![Experiments](../imgs/mlflow_experiments.png)
+
+The models and their different stages can be accessed there as well.
+
+When a new model is set to a production stage, the previous one is set to archived, as illustrated by the following two figures:
+![Production model](../imgs/mlflow_production_model.png)
+![Archived model](../imgs/mlflow_archived_model.png)
+
+
 ## Frontend
 
 The web app can be accessed using Streamlit at port 8501 and has the following looks:
@@ -30,8 +42,9 @@ Drift Monitoring reports can also be acessed in Grafana which runs in port 3000:
 ![Grafana](../imgs/grafana_reports.png)
 
 
-## CI/CD pipeline on GitHub
+## CI/CD pipelines on GitHub
 
+The CI/CD pipelines are powered by GitHub Actions and are set to run for the main branch for demonstration purposes only. Consider changing this a development branch.
 When CI/CD pipelines run properly, you will see similar information as the following:
 ![CI](../imgs/ci-tests.png)
 ![CI](../imgs/cd-deploy.png)
